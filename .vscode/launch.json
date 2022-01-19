@@ -1,0 +1,31 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Launch BackUserApplication",
+            "request": "launch",
+            "mainClass": "com.user_api.BackUserApplication",
+            "projectName": "back_user"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-BackStockApplication<back_stock>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "mainClass": "com.stock_api.back_stock.BackStockApplication",
+            "projectName": "back_stock",
+            "args": ""
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-BackStockApplication<back_stock>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "mainClass": "com.stock_api.BackStockApplication",
+            "projectName": "back_stock",
+            "args": ""
+        }
+    ]
+}

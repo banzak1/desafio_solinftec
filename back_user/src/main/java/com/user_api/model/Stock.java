@@ -3,12 +3,12 @@ package com.user_api.model;
 import java.io.Serializable;
 import java.util.Objects;
 
-public class UserStockBalance implements Serializable {
+public class Stock implements Serializable {
 
     private Long id_stock;
     private User user;
 
-    public UserStockBalance(Long id_stock, User user) {
+    public Stock(Long id_stock, User user) {
         this.id_stock = id_stock;
         this.user = user;
     }
@@ -19,7 +19,7 @@ public class UserStockBalance implements Serializable {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        UserStockBalance that = (UserStockBalance) o;
+        Stock that = (Stock) o;
         return Objects.equals(id_stock, that.id_stock) && Objects.equals(user, that.user);
     }
 
