@@ -5,6 +5,13 @@
             "name": "Launch BackUserApplication",
             "request": "launch",
             "mainClass": "com.user_api.BackUserApplication",
+            "projectName": "solinfbreaker"
+        },
+        {
+            "type": "java",
+            "name": "Launch BackUserApplication",
+            "request": "launch",
+            "mainClass": "com.user_api.BackUserApplication",
             "projectName": "back_user"
         },
         {

@@ -7,8 +7,8 @@
 		<version>2.6.2</version>
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.Rest</groupId>
-	<artifactId>API1</artifactId>
+	<groupId>com.stock_api</groupId>
+	<artifactId>back_stock</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<description> project for Spring Boot</description>
 	<properties>

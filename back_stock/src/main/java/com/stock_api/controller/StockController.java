@@ -7,8 +7,9 @@ import com.stock_api.model.Stock;
 import com.stock_api.repository.StockRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.web.bind.annotation.*;
+
+//import org.springframework.web.bind.annotation.controller;
 
 @RestController
 
@@ -18,8 +19,7 @@ public class StockController {
     private StockRepository stockRepository;
 
     @GetMapping("/stocks/{id}")
-    public Optional<Stock> obterStock(@PathVariable(value = "id") Long id) throws Exception {
-        Thread.sleep(3000);
+    public Optional<Stock> obterStock(@PathVariable(value = "id") Long id) {
         return stockRepository.findById(id);
     }
 
