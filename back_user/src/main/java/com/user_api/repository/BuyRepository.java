@@ -14,75 +14,59 @@ import java.util.List;
 @Repository
 public interface BuyRepository extends JpaRepository<UserOrders, Long> {
 
-        @Query(value = "SELECT * FROM user_orders WHERE type = 0 and id_stock = ?1 and status = 1", nativeQuery = true)
-        List<UserOrders> findByTypeStock(Long id_stock);
-        // Procura compras
-
-        @Query(value = "SELECT * FROM user_orders a, user_orders b  where a.type <> b.type  and a.id_stock = b.id_stock and a.status = b.status ", nativeQuery = true)
-        List<UserOrders> findByCalculo();
-
         @Modifying
         @Query(value = "update user_orders  set remaining_value = (SELECT MAX(b.remaining_value) - MIN(b.volume)AS ID FROM user_orders a, user_orders b  WHERE a.type <> b.type  and a.id_stock = b.id_stock and a.id=?1) where type =  0 AND id=?1", nativeQuery = true)
         int updateRemainingValue(UserOrders id);
         // Ele atualiza o raimaning value conforme compras são realizadas
 
         @Modifying
-        @Query(value = "UPDATE user_orders SET status = 2 WHERE id = ?1 and remaining_value = 0", nativeQuery = true)
-        int updateStatus(UserOrders id);
-
-        @Modifying
-        @Query(value = "UPDATE user_orders SET status = 2 WHERE id = 2 and remaining_value = 0 ", nativeQuery = true)
-        int updateStatus2();
-
-        @Modifying
-        @Query(value = "update users set dollar_balance = (select  u.dollar_balance - a.remaining_value  * uo.price  "
-                        + " FROM user_orders a, user_orders uo " +
-                        "inner join users u on uo.id_user = u.id " +
-                        "where a.status = 1  and a.id_stock = uo.id_stock and a.type = 1 and a.status = uo.status and a.created_on > uo.created_on and  u.id = ?1) where id = ?1", nativeQuery = true)
-        int updateDollarBalance(User user);
+        @Query(value = "update users set dollar_balance = dollar_balance - ( select uo.remaining_value  * a.price FROM user_orders a, user_orders uo "
+                        +
+                        " inner join users u on uo.id_user = u.id " +
+                        " where a.status = 1 and a.type = 0 and a.status = uo.status  and a.id_user = ?1 and a.id_user <> uo.id_user and a.id = ?2 fetch first 1 rows only ) where id = ?1", nativeQuery = true)
+        int updateDollarBalancePO(User user, UserOrders id);
 
         @Modifying
         @Query(value = " update users set dollar_balance = dollar_balance  - ( " +
                         " select a.remaining_value  * a.price " +
                         " fROM user_orders a, user_orders uo " +
-                        " where  a.id_stock = uo.id_stock and a.type = 0  and uo.id <> a.id and a.id = ?1 and a.created_on > uo.created_on ) where id = ?2", nativeQuery = true)
-        int updateDollarBalance2(UserOrders id, User user);
-
-        // atauliza dinheiro do usuario quando comrpas
-
-        @Query(value = "SELECT * from user_orders where status =1 and type = 0 ", nativeQuery = true)
-        List<UserOrders> findByStatus();
-        // seleciona compras abertas
+                        " where  a.id_stock = uo.id_stock and a.type = 0  and uo.id <> a.id and a.id = ?1 and a.id_user = ?2 and a.remaining_value  <> 0 fetch first 1 rows only ) where id = ?2", nativeQuery = true)
+        int updateDollarBalanceNE(UserOrders id, User user);
 
         @Modifying
-        @Query(value = "update user_stock_balances set volume = (select a.volume - a.remaining_value " +
+        @Query(value = "update user_stock_balances set volume = volume + (select a.volume - uo.remaining_value " +
                         " AS ID FROM user_orders a, user_orders uo " +
                         " inner join users u on uo.id_user = u.id " +
                         " inner join user_stock_balances usb on u.id = usb.id_user " +
-                        " WHERE a.type <> uo.type  and a.id_stock = uo.id_stock and a.id= ?1 and a.created_on > uo.created_on) where id_user = ?2 and id_stock = ?3", nativeQuery = true)
-        int atualizarBalance(Long id, User id_user, Long id_stock);
-        // calaculo do Stock balance quando realizada a compra
-
-        @Query(value = " select * from " +
-                        " user_orders a, user_orders b where a.remaining_value > b.volume and a.type = 0 and a.id_stock = b.id_stock and a.id <> b.id order by a.created_on asc ", nativeQuery = true)
-        List<UserOrders> fyndteste();
+                        " WHERE a.type <> uo.type  and a.id_stock = uo.id_stock and a.id= ?1 fetch first 1 rows only ) where id_user = ?2 and id_stock = ?3", nativeQuery = true)
+        int atualizarBalancePO(Long id, User id_user, Long id_stock);
 
         @Modifying
-        @Query(value = " update user_orders  set remaining_value = (SELECT MAX(a.remaining_value) - MIN(b.volume)AS ID FROM user_orders a, user_orders b  WHERE a.type <> b.type  and a.id_stock = b.id_stock and a.id= ?1) where id= ?1 and type = 0 ", nativeQuery = true)
-        int atualizarvalue(UserOrders id_order);
+        @Query(value = "update user_stock_balances set volume = volume -  (select a.volume - uo.remaining_value " +
+                        " AS ID FROM user_orders a, user_orders uo " +
+                        " inner join users u on uo.id_user = u.id " +
+                        " inner join user_stock_balances usb on u.id = usb.id_user " +
+                        " WHERE a.type <> uo.type  and a.id_stock = uo.id_stock and a.id= ?1 fetch first 1 rows only) where id_user = ?2 and id_stock = ?3", nativeQuery = true)
+        int atualizarBalanceNE(Long id, User id_user, Long id_stock);
 
-        @Query(value = "select * from " +
-                        " user_orders a, user_orders b where  a.remaining_value <= b.volume and a.type = 0 and a.status = 1 and a.id_stock = b.id_stock and a.id <> b.id and a.created_on > b.created_on", nativeQuery = true)
+        @Query(value = " select * from " +
+                        "                user_orders a, user_orders b where a.type <> b.type and a.remaining_value > b.volume and a.type = 0 and b.type = 1 and a.id_stock = b.id_stock and a.id <> b.id "
+                        +
+                        "                and a.status = 1 and a.remaining_value <> 0 ", nativeQuery = true)
+        List<UserOrders> fyndteste();
+
+        @Query(value = "  select * from " +
+                        "  user_orders a, user_orders b where a.type <> b.type and  a.remaining_value <= b.volume and a.type = 0 and a.status = 1 and a.id_stock = b.id_stock and a.id <> b.id order by a.created_on asc ", nativeQuery = true)
         List<UserOrders> findtTeste1();
 
         @Modifying
-        @Query(value = " update user_orders  set remaining_value = (  select a.remaining_value  - b.remaining_value from "
-                        +
-                        " user_orders a, user_orders b where  a.type =0 and a.id_stock = b.id_stock and a.id_stock = ?1 and a.id <> b.id and a.created_on > b.created_on) where id=?2 and type = 0", nativeQuery = true)
-        int AtuaalizarValue(Long id_stock, UserOrders id);
+        @Query(value = " update user_orders  set remaining_value = ( select a.remaining_value  - uo.volume  from " +
+                        " user_orders a, user_orders uo inner join users u on uo.id_user = u.id " +
+                        " where a.type = 0 and a.id_stock = uo.id_stock  and uo.id = ?1 and uo.id_user = ?2 order by a.created_on asc fetch first 1 rows only) where id=?1 and type = 0", nativeQuery = true)
+        int RemainigPO(UserOrders id, User user);
 
         @Modifying
-        @Query(value = " update user_orders  set remaining_value = 0 where id=?1 and type = 0", nativeQuery = true)
-        int AtuaalizarValue2(UserOrders id);
+        @Query(value = " update user_orders  set remaining_value = 0 where  type = 0 and id = ?1", nativeQuery = true)
+        int RemainingNE(UserOrders id_order);
 
 }

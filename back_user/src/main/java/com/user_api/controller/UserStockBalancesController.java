@@ -35,15 +35,6 @@ public class UserStockBalancesController {
         return userStockBalancesRepository.findAll();
     }
 
-    @GetMapping("/stocks/{id}")
-    public ResponseEntity<UserStockDto> obterPorCodigo(@PathVariable Long id,
-            @RequestHeader("Authorization") String token) {
-
-        UserStockDto userStockBalances = this.stockService.obterPorCodigo(id, token);
-
-        return ResponseEntity.ok(userStockBalances);
-    }
-
     @GetMapping("/teste/{id}")
     public ResponseEntity<StockDto> obterPorCodigo2(@PathVariable Long id,
             @RequestHeader("Authorization") String token) {
@@ -61,5 +52,4 @@ public class UserStockBalancesController {
         // UserStockBalances userStockBalances = dto.tranformaParaObjeto(user);
 
     }
-
 }

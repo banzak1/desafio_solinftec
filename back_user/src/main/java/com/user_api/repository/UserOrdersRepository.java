@@ -16,22 +16,26 @@ public interface UserOrdersRepository extends JpaRepository<UserOrders, Long> {
         @Query(value = "SELECT * FROM user_orders WHERE type = 1 and id_stock = ?1 and status = 1", nativeQuery = true)
         List<UserOrders> findByTypeStock(Long id_stock);// procurar ordens de venda abertas
 
-        @Query(value = "SELECT * FROM user_orders a, user_orders b  where a.type <> b.type  and a.remaining_value > b.volume and a.type = 1  and a.id_stock = b.id_stock and a.status = b.status", nativeQuery = true)
+        @Query(value = "SELECT * FROM user_orders a, user_orders b  where a.type <> b.type  and a.remaining_value > b.volume and a.type = 1  and a.id_stock = b.id_stock and a.status = b.status ", nativeQuery = true)
         List<UserOrders> findByCalculo();// Pegando matches
 
         @Modifying
-        @Query(value = "update user_orders  set remaining_value = (SELECT  a.remaining_value - b.volume AS ID FROM user_orders a, user_orders b  WHERE a.type =1  and a.id_stock = b.id_stock and a.id_stock = ?1 and a.id <> b.id) where type =  1 AND id=?2", nativeQuery = true)
+        @Query(value = "update user_orders  set remaining_value = (SELECT  a.remaining_value - b.volume AS ID FROM user_orders a, user_orders b  WHERE a.type =1  and a.id_stock = b.id_stock and a.id_stock = ?1 and a.id <> b.id fetch first 1 rows only) where type =  1 AND id=?2", nativeQuery = true)
         int updateRemainingValue(Long id_stock, UserOrders id);// Ele atualiza remaining value quando há match
 
         @Modifying
-        @Query(value = "UPDATE user_orders SET status = 2 WHERE remaining_value = 0", nativeQuery = true)
+        @Query(value = "update user_orders  set remaining_value = 0 WHERE remaining_value < 0", nativeQuery = true)
         int updateStatus();
 
         @Modifying
-        @Query(value = "update users set dollar_balance = (select a.volume  * uo.price + u.dollar_balance " +
-                        "FROM user_orders a, user_orders uo " +
-                        "inner join users u on uo.id_user = u.id " +
-                        "where a.status = 1  and a.id_stock = uo.id_stock and a.type = 0  and a.status = uo.status and uo.id <> a.id and u.id = ?1) where id = ?1", nativeQuery = true)
+        @Query(value = "UPDATE user_orders SET status = 2 WHERE remaining_value = 0", nativeQuery = true)
+        int updateStatus2();
+
+        @Modifying
+        @Query(value = "update users set dollar_balance = ( select a.volume * a.price + u.dollar_balance " +
+                        " FROM user_orders a, user_orders uo " +
+                        " inner join users u on uo.id_user = u.id " +
+                        " where uo.status = 1  and a.id_stock = uo.id_stock and uo.type = 1 and uo.id <> a.id and uo.id_user = ?1 fetch first 1 rows only) where id = ?1", nativeQuery = true)
         int updateDollarBalance(User user);
 
         @Modifying
@@ -41,46 +45,23 @@ public interface UserOrdersRepository extends JpaRepository<UserOrders, Long> {
                         "where  a.id_stock = uo.id_stock and a.type = 1  and uo.id <> a.id and a.id = ?1  and a.type <> uo.type "
                         +
                         ") where id = ?2", nativeQuery = true)
-        int updateDollarBalance1(UserOrders id, User user);
-
-        @Query(value = "SELECT * from user_orders where status =1 and type = 1 ", nativeQuery = true)
-        List<UserOrders> findByStatus();
+        int updateDollarBalanceNE(UserOrders id_order, User user);
 
         @Modifying
-        @Query(value = "update user_stock_balances set volume = (SELECT MAX(usb.volume) - MIN(uo.remaining_value)AS ID FROM user_orders uo inner join users u on uo.id_user = u.id inner join user_stock_balances usb on u.id = usb.id_user where uo.id_user = 1 and uo.id_stock = 5) where id_user =1 and id_stock=5", nativeQuery = true)
-        int selectLinha();
-
-        @Query(value = "select * from user_stock_balances usb inner join users u on usb.id_user = u.id inner join user_orders uo  on u.id = uo.id_user where uo.id_stock = usb.id_stock ", nativeQuery = true)
-        List<UserOrders> findStockExists();
-
-        @Modifying
-        @Query(value = "insert into user_stock_balances (id_user, id_stock,  stock_symbol, stock_name, volume)(select id_user, id_stock, stock_symbol, stock_name, volume from user_orders uo)", nativeQuery = true)
-        @Transactional
-        void inserirStock();
-
-        @Modifying
-        @Query(value = "update user_stock_balances set volume = volume -(" +
-                        "select a.volume - a.remaining_value" +
-                        " AS ID FROM user_orders a" +
-                        " Inner join users u on a.id_user = u.id " +
+        @Query(value = "update user_stock_balances set volume = volume - ( select  uo.volume - uo.remaining_value " +
+                        "  AS ID FROM user_orders a, user_orders uo " +
+                        "  Inner join users u on id_user = u.id " +
                         "  inner join user_stock_balances usb on u.id = usb.id_user " +
-                        "  WHERE  a.id_stock = usb.id_stock and a.id_user = ?1 and a.id_stock = ?2 " +
-                        "  ) where id_user = ?1 and id_stock = ?2", nativeQuery = true)
-        int atualizarBalance(User id_user, Long id_stock);
-
-        @Query(value = "SELECT MAX(a.remaining_value) - MIN(b.volume) AS ID FROM user_orders a, user_orders b where a.status = 1 and a.id_user = b.id_user   and a.id_stock = b.id_stock", nativeQuery = true)
-        int selecionarSub();
-
-        @Query(value = "SELECT * FROM user_orders a, user_orders b  where a.type =1  and a.id_stock = b.id_stock  and a.volume >= b.volume  ", nativeQuery = true)
-        List<UserOrders> novoTeste();
+                        "  WHERE  a.id_stock = usb.id_stock and a.id_user = ?1 and a.id_stock = ?2 and uo.type = 0 fetch first 1 rows only ) where id_user = ?1 and id_stock = ?2 ", nativeQuery = true)
+        int atualizarBalance(User user, Long id_stock);
 
         @Query(value = "select * from " +
-                        " user_orders a, user_orders b where a.remaining_value <= b.volume and a.type = 1 and a.id_stock = b.id_stock and a.id <> b.id  and a.status <>2 and a.type <> b.type order by a.created_on asc", nativeQuery = true)
+                        " user_orders a, user_orders b where a.remaining_value < b.volume and  a.type = 1 and a.id_stock = b.id_stock and a.id <> b.id  and a.status <>2 and a.type <> b.type order by a.created_on asc", nativeQuery = true)
         List<UserOrders> testando1();
 
         @Modifying
         @Query(value = "update user_orders  set remaining_value = 0 where id=?1 and type = 1 ", nativeQuery = true)
-        int updateRemainingValue2(UserOrders id);// Ele atualiza remaining value quando há match
+        int updateRemainingValue2(UserOrders id_order);// Ele atualiza remaining value quando há match
 
         @Modifying
         @Query(value = "update user_stock_balances set volume = ( " +
@@ -90,6 +71,18 @@ public interface UserOrdersRepository extends JpaRepository<UserOrders, Long> {
                         " inner join user_stock_balances usb on u.id = usb.id_user " +
                         "  WHERE a.id_user = ?1 and a.id_stock = ?2 and usb.id_stock = ?2" +
                         " ) where id_user = ?1 and id_stock = ?2", nativeQuery = true)
-        int atualizarBalance2(User id_user, Long id_stock);
+        int RemainingNE(User user, Long id_stock);
+
+        @Query(value = "select MAX(price) from user_orders where id_stock = ?1 and status = 1 and type = 1", nativeQuery = true)
+        Double getAskMax(Long id_stock);
+
+        @Query(value = "select MIN(price) from user_orders where id_stock = ?1 and status = 1 and type = 1", nativeQuery = true)
+        Double getAskMin(Long id_stock);
+
+        @Query(value = "select MAX(price) from user_orders where id_stock = ?1 and status = 1 and type = 0 ", nativeQuery = true)
+        Double getBidMax(Long id_stock);
+
+        @Query(value = "select MIN(price) from user_orders where id_stock = ?1 and status = 1 and type = 0", nativeQuery = true)
+        Double getBidMin(Long id_stock);
 
 }
