@@ -7,7 +7,7 @@ import com.user_api.model.UserStockBalances;
 import com.user_api.repository.UserStockBalancesRepository;
 import com.user_api.repository.UsersRepository;
 import com.user_api.service.StockService;
-import com.user_api.service.StockService;
+import com.user_api.service.UserStockService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +28,7 @@ public class UserStockBalancesController {
     @Autowired
     private UsersRepository usersRepository;
     @Autowired
-    private StockService userStockService;
+    private UserStockService userStockService;
 
     @GetMapping("/teste")
     public List<UserStockBalances> listar() {
