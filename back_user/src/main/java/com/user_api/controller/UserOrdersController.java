@@ -67,14 +67,15 @@ public class UserOrdersController {
             if (userOrders.isEmpty()) {
                 System.out.println(dto.getStatus());
                 if (!userteste1.isEmpty()) {
-                    System.out.println("compra negativa");
+                    System.out.println("buy negativa");
                     for (UserOrders cont : userteste1) {
                         System.out.println(dto.getId());
                         buyRepository.updateDollarBalanceNE(cont, cont.getUser());
                         buyRepository.RemainingNE(cont);
                         buyRepository.atualizarBalanceNE(cont.getId(), cont.getUser(), cont.getId_stock());
                     }
-                    // userOrdersRepository.updateStatus2();buy
+                    // userOrdersRepository.updateStatus2();
+                }
                 if (!userFind.isEmpty()) {
                     System.out.println("venda positiva");
                     for (UserOrders cont : userFind) {
